@@ -1,0 +1,35 @@
+
+POST http://localhost:8080/books
+Content-Type: application/json
+
+{ "title": "Java Performance by Vladimir Sonkin"}
+
+###
+
+POST http://localhost:8080/books
+Content-Type: application/json
+
+{ "title": "Java Performance by Nikolai Hlebnikov"}
+
+###
+
+POST http://localhost:8080/books
+Content-Type: application/json
+
+{ "title": "Kotlin by Egor Rogov"}
+
+###
+
+GET http://localhost:8080/books/keywords/Nikolai%20Java
+
+###
+
+GET http://localhost:8080/books/keywords/Rogov%20Egor%20Kotlin
+
+###
+
+GET http://localhost:8080/books/keywords/Java%20Nikolai
+
+###
+
+GET http://localhost:8080/books

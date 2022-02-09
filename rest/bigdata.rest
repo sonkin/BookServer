@@ -1,0 +1,63 @@
+
+###
+
+GET http://localhost:8080/books/random
+
+> {%
+   var keywords=response.body.title.split(" ");
+   client.log(keywords)
+   client.global.set("title",keywords[0]);
+   client.global.set("name",keywords[2]);
+   client.global.set("surname",keywords[3]);
+
+   client.log("http://localhost:8080/books/keywords/"+keywords[0]);
+   client.log("http://localhost:8080/books/keywords/"+keywords[2]);
+   client.log("http://localhost:8080/books/keywords/"+keywords[3]);
+   client.log("http://localhost:8080/books/keywords/"+keywords[2]+"%20"
+          +keywords[3]);
+   client.log("http://localhost:8080/books/keywords/"+keywords[0]+"%20"
+          +keywords[3]);
+   client.log("http://localhost:8080/books/keywords/"+keywords[0]+"%20"
+          +keywords[3]+"%20"+keywords[2]);
+   client.log("http://localhost:8080/books/keywords/"+keywords[3]+"%20"
+          +keywords[2]+"%20"+keywords[0]);
+   client.log("http://localhost:8080/books/keywords/"+keywords[2]+"%20"
+          +keywords[3]+"%20"+keywords[0]);
+%}
+
+###
+
+GET http://localhost:8080/books/keywords/{{name}}
+
+###
+
+GET http://localhost:8080/books/keywords/{{title}}
+
+###
+
+GET http://localhost:8080/books/keywords/{{surname}}
+
+###
+
+GET http://localhost:8080/books/keywords/{{title}}%20{{surname}}
+
+###
+
+GET http://localhost:8080/books/keywords/{{title}}%20{{name}}
+
+###
+
+GET http://localhost:8080/books/keywords/{{name}}%20{{title}}%20{{surname}}
+
+###
+
+GET http://localhost:8080/books/keywords/{{title}}%20{{name}}%20{{surname}}
+
+###
+
+GET http://localhost:8080/books/keywords/{{surname}}%20{{title}}%20{{name}}
+
+###
+
+GET http://localhost:8080/books/keywords/{{surname}}%20{{name}}%20{{title}}
+

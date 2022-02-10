@@ -1,0 +1,7 @@
+###
+
+GET http://localhost:8080/measurements
+
+###
+
+GET http://localhost:8080/measurements/clear

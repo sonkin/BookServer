@@ -1,5 +1,6 @@
 package com.luxoft.highperformance.bookserver;
 
+import com.luxoft.highperformance.bookserver.measure.Measure;
 import com.luxoft.highperformance.bookserver.model.Book;
 import com.luxoft.highperformance.bookserver.repositories.BookRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,7 @@ public class BookController {
     @Autowired
     BookRepository bookRepository;
 
+    @Measure(value = "baseline", warmup = 2)
     @GetMapping("keywords/{keywordsString}")
     public List<Book> getBookByTitle(@PathVariable String keywordsString) {
         String[] keywords = keywordsString.split(" ");
@@ -30,6 +32,12 @@ public class BookController {
                 keywords[0], keywords[1], keywords[2]);
         }
         return null;
+    }
+
+    @Measure("test")
+    @GetMapping("test")
+    public String getTest() {
+        return "just a test!";
     }
 
     @GetMapping("/random")

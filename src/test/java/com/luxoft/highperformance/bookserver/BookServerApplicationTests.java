@@ -28,7 +28,7 @@ class BookServerApplicationTests {
     void contextLoads() {
     }
 
-    @Test
+    //@Test
     public void removeAllBooks() {
         bookRepository.deleteAll();
     }

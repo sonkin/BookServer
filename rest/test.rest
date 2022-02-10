@@ -32,4 +32,16 @@ GET http://localhost:8080/books/keywords/Java%20Nikolai
 
 ###
 
-GET http://localhost:8080/books
+GET http://localhost:8080/books/keywords/Egor%20Kotlin
+
+###
+
+GET http://localhost:8080/books/test
+
+###
+
+GET http://localhost:8080/measurements
+
+###
+
+#GET http://localhost:8080/measurements/clear

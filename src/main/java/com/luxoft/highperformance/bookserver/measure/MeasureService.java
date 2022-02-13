@@ -34,6 +34,7 @@ public class MeasureService {
                 measurement.setTime(time);
                 measurement.setCallsCountMeasured(1L);
                 measurement.setLatency(time);
+                measurement.getTimes().add(time);
             }
         } else {
             measurement.setCallsCount(measurement.getCallsCount()+1);
@@ -43,6 +44,7 @@ public class MeasureService {
                 measurement.setTime(measurement.getTime() + time);
                 measurement.setLatency(measurement.getTime() /
                         measurement.getCallsCountMeasured());
+                measurement.getTimes().add(time);
             }
         }
     }

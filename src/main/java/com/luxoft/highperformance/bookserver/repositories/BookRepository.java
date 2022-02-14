@@ -12,4 +12,12 @@ public interface BookRepository extends JpaRepository<Book, Integer> {
     List<Book> findAllByTitleContainingAndTitleContainingAndTitleContaining(
         String keyword1, String keyword2, String keyword3);
 
+    List<Book> findByKeyword1(String keyword);
+    List<Book> findByKeyword2(String keyword);
+    List<Book> findByKeyword3(String keyword);
+    List<Book> findByKeyword1AndKeyword2(String keyword1, String keyword2);
+    List<Book> findByKeyword1AndKeyword3(String keyword1, String keyword2);
+    List<Book> findByKeyword2AndKeyword3(String keyword1, String keyword2);
+    List<Book> findByKeyword1AndKeyword2AndKeyword3(String keyword1, String keyword2, String keyword3);
+
 }

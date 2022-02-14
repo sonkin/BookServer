@@ -28,7 +28,7 @@ class BookServerApplicationTests {
     void contextLoads() {
     }
 
-    //@Test
+    @Test
     public void removeAllBooks() {
         bookRepository.deleteAll();
     }
@@ -43,6 +43,7 @@ class BookServerApplicationTests {
             String authorSurname = "AuthorSurname"+random.nextInt(BOOKS_AMOUNT);
             Book book = new Book();
             book.setTitle(title+" by "+authorName+authorSurname);
+            Book.initKeywords(book);
             bookRepository.save(book);
         }
     }

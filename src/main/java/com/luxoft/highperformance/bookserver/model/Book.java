@@ -1,7 +1,6 @@
 package com.luxoft.highperformance.bookserver.model;
 
 
-import com.luxoft.highperformance.bookserver.measure.Measurement;
 import lombok.*;
 
 import javax.persistence.*;
@@ -25,12 +24,7 @@ public class Book {
     private String keyword3;
 
     public final static int KEYWORDS_AMOUNT = 3;
-    public static List<Map<String, Set<Book>>> keywordMaps = new ArrayList<>();
-    static {
-        for (int i=0;i<KEYWORDS_AMOUNT;i++) {
-            keywordMaps.add(new ConcurrentHashMap<>());
-        }
-    }
+    public static Map<String, Set<Book>> keywordMap = new ConcurrentHashMap<>();
 
     public static void initKeywords(Book book) {
         String[] keywords = book.getTitle().split(" ");
@@ -41,14 +35,14 @@ public class Book {
     }
 
     private static void addToHashMaps(Book book, List<String> keywords) {
-        for (int i=0; i<KEYWORDS_AMOUNT; i++) {
+        for (int i=0; i< KEYWORDS_AMOUNT; i++) {
             String keyword = keywords.get(i);
-            if (keywordMaps.get(i).containsKey(keyword)) {
-                keywordMaps.get(i).get(keyword).add(book);
+            if (keywordMap.containsKey(keyword)) {
+                keywordMap.get(keyword).add(book);
             } else {
                 HashSet<Book> set = new HashSet<>();
                 set.add(book);
-                keywordMaps.get(i).put(keyword, set);
+                keywordMap.put(keyword, set);
             }
         }
     }

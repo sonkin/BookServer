@@ -93,6 +93,61 @@ public class BookController {
         return null;
     }
 
+    @Autowired
+    DataSource dataSource;
+
+    @Measure(value = "JDBC", warmup = 50)
+    @GetMapping("keywords2/{keywordsString}")
+    @Transactional
+    public List<Book> getBookByTitleJDBC(@PathVariable String keywordsString) throws SQLException {
+        StringBuilder builder = new StringBuilder();
+        String[] keywords = keywordsString.split(" ");
+        builder.append("'").append(keywords[0]).append("'");
+        if (keywords.length>1) {
+            builder.append(",'").append(keywords[1]).append("'");
+        }
+        if (keywords.length>2) {
+            builder.append(",'").append(keywords[2]).append("'");
+        }
+        String keywordsIn = builder.toString();
+
+        List<Book> books = new ArrayList<>();
+        String SQL = "SELECT * FROM BOOK ";
+        if (keywords.length == 1) {
+            SQL += "WHERE KEYWORD1='"+keywords[0]+"' OR " +
+                    "KEYWORD2='"+keywords[0]+"' OR " +
+                    "KEYWORD3='"+keywords[0]+"'";
+        } else if (keywords.length == 2) {
+            SQL += "WHERE "+
+                    "(KEYWORD1='"+keywords[0]+"' AND KEYWORD2='"+keywords[1]+"') OR " +
+                    "(KEYWORD2='"+keywords[0]+"' AND KEYWORD1='"+keywords[1]+"') OR "+
+                    "(KEYWORD1='"+keywords[0]+"' AND KEYWORD3='"+keywords[1]+"') OR " +
+                    "(KEYWORD3='"+keywords[0]+"' AND KEYWORD1='"+keywords[1]+"') OR "+
+                    "(KEYWORD2='"+keywords[0]+"' AND KEYWORD3='"+keywords[1]+"') OR " +
+                    "(KEYWORD3='"+keywords[0]+"' AND KEYWORD2='"+keywords[1]+"')";
+        } else if (keywords.length == 3) {
+            SQL += "WHERE (KEYWORD1 IN (" + keywordsIn + ")) ";
+            SQL += "AND (KEYWORD2 IN (" + keywordsIn + ")) ";
+            SQL += "AND (KEYWORD3 IN (" + keywordsIn + ")) ";
+        }
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection
+                     .prepareStatement(SQL)) {
+            ResultSet resultSet = statement.executeQuery();
+            if (!resultSet.next()) return books; // nothing found
+            Book book = new Book();
+            book.setId(resultSet.getInt("ID"));
+            book.setTitle(resultSet.getString("TITLE"));
+            book.setKeyword1(resultSet.getString("KEYWORD1"));
+            book.setKeyword2(resultSet.getString("KEYWORD2"));
+            book.setKeyword3(resultSet.getString("KEYWORD3"));
+            books.add(book);
+        }
+
+        return books;
+    }
+
     @Measure("test")
     @GetMapping("test")
     public String getTest() {
@@ -107,7 +162,7 @@ public class BookController {
         return all.get(index);
     }
 
-    @Measure(value = "HashMap", warmup = 50)
+    @Measure(value = "baseline", warmup = 50)
     @GetMapping("keywords3/{keywordsString}")
     public Set<Book> getBookByTitleHashMap(@PathVariable String keywordsString) {
         String[] keywords = keywordsString.split(" ");
@@ -115,11 +170,9 @@ public class BookController {
         Set<Book> bookSet = null;
         for (String keyword : keywords) {
             Set<Book> booksWithKeywordSet = new HashSet<>();
-            for (int i = 0; i < Book.KEYWORDS_AMOUNT; i++) {
-                Map<String, Set<Book>> map = Book.keywordMaps.get(i);
-                if (map.containsKey(keyword)) {
-                    booksWithKeywordSet.addAll(map.get(keyword));
-                }
+            Map<String, Set<Book>> map = Book.keywordMap;
+            if (map.containsKey(keyword)) {
+                booksWithKeywordSet.addAll(map.get(keyword));
             }
             if (bookSet == null) {
                 bookSet = booksWithKeywordSet;

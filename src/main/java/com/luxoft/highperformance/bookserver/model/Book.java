@@ -1,7 +1,14 @@
 package com.luxoft.highperformance.bookserver.model;
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import lombok.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
 import javax.persistence.*;
 import java.util.*;
@@ -22,30 +29,6 @@ public class Book {
     private String keyword1;
     private String keyword2;
     private String keyword3;
-
-    public final static int KEYWORDS_AMOUNT = 3;
-    public static Map<String, Set<Book>> keywordMap = new ConcurrentHashMap<>();
-
-    public static void initKeywords(Book book) {
-        String[] keywords = book.getTitle().split(" ");
-        if (keywords.length > 0) book.setKeyword1(keywords[0]);
-        if (keywords.length > 1) book.setKeyword2(keywords[2]);
-        if (keywords.length > 2) book.setKeyword3(keywords[3]);
-        addToHashMaps(book, List.of(keywords[0],keywords[2],keywords[3]));
-    }
-
-    private static void addToHashMaps(Book book, List<String> keywords) {
-        for (int i=0; i< KEYWORDS_AMOUNT; i++) {
-            String keyword = keywords.get(i);
-            if (keywordMap.containsKey(keyword)) {
-                keywordMap.get(keyword).add(book);
-            } else {
-                HashSet<Book> set = new HashSet<>();
-                set.add(book);
-                keywordMap.put(keyword, set);
-            }
-        }
-    }
 
     @Override
     public boolean equals(Object o) {

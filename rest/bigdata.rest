@@ -4,7 +4,7 @@
 GET http://localhost:8080/books/random
 
 > {%
-   var path = "keywords1"; // CHANGE HERE TO TEST DIFFERENT ALGORITHMS
+   var path = "keywords7"; // CHANGE HERE TO TEST DIFFERENT ALGORITHMS
    client.global.set("path", path);
 
    var keywords=response.body.title.split(" ");

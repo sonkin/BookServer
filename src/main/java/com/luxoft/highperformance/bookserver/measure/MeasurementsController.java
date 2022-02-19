@@ -9,7 +9,7 @@ import java.util.*;
 
 @RestController
 public class MeasurementsController {
-    private MeasureService measureService;
+    private final MeasureService measureService;
 
     public MeasurementsController(MeasureService measureService) {
         this.measureService = measureService;

@@ -2,13 +2,15 @@ package com.luxoft.highperformance.bookserver.measure;
 
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 @Service
 public class MeasureService {
 
-    Map<String, Measurement> measurements = new HashMap<>();
+    Map<String, Measurement> measurements = Collections.synchronizedMap(new TreeMap<>());
     String baselineName;
 
     public void addMeasurement(String name, Long time, long warmup, boolean baseline) {

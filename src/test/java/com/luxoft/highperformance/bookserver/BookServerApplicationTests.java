@@ -24,13 +24,16 @@ class BookServerApplicationTests {
     @Autowired
     BookRepository bookRepository;
 
+    @Autowired
+    BookService bookService;
+
     @Test
     void contextLoads() {
     }
 
     @Test
     public void removeAllBooks() {
-        bookRepository.deleteAll();
+        bookRepository.deleteAllInBatch();
     }
 
     @Test
@@ -43,8 +46,10 @@ class BookServerApplicationTests {
             String authorSurname = "AuthorSurname"+random.nextInt(BOOKS_AMOUNT);
             Book book = new Book();
             book.setTitle(title+" by "+authorName+authorSurname);
-            Book.initKeywords(book);
-            bookRepository.save(book);
+            Book book1 = bookRepository.save(book);
+            bookService.initKeywords(book1);
+            bookService.initKeywords2(book1);
+            bookService.initKeywords3(book1);
         }
     }
 
@@ -53,10 +58,10 @@ class BookServerApplicationTests {
         Random random = new Random();
         List<Book> all = bookRepository.findAll();
         System.out.println("Found "+all.size()+" books");
-        for (int i=0;i<10;i++) {
-            int index = random.nextInt(BOOKS_AMOUNT);
-            System.out.println(all.get(index));
-        }
+//        for (int i=0;i<10;i++) {
+//            int index = random.nextInt(BOOKS_AMOUNT);
+//            System.out.println(all.get(index));
+//        }
     }
 
 }

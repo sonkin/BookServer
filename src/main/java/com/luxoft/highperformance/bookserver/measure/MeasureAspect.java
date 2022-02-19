@@ -19,7 +19,7 @@ public class MeasureAspect {
     public Object aroundCallAt(ProceedingJoinPoint pjp, Measure measure) throws Throwable {
         long start = System.nanoTime();
         Object retVal = pjp.proceed();
-        long time = (System.nanoTime() - start) / 1000;
+        long time = (System.nanoTime() - start);
         boolean baseline = measure.value().equals("baseline") || measure.baseline();
         measureService.addMeasurement(measure.value(), time, measure.warmup(), baseline);
         return retVal;

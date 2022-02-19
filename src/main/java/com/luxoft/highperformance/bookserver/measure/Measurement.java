@@ -5,10 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Data;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -22,7 +19,7 @@ public class Measurement {
     private String boost;
 
     @JsonIgnore
-    private SortedSet<Long> times = new TreeSet<>();
+    private Set<Long> times = Collections.synchronizedSet(new HashSet<>());
 
     public Long getPercentile50() {
         return getPercentile(50);
@@ -41,7 +38,7 @@ public class Measurement {
         if (times.size() == 0) return null;
         int indexAtPercentile = (int) Math.floor(times.size() * percentile / 100d);
         Long[] timesArr = times.toArray(new Long[0]);
-        if (indexAtPercentile>=times.size()) return 0L;
+        if (indexAtPercentile>=timesArr.length) return 0L; // TODO: investigate why it happens
         Long percentileValue = timesArr[indexAtPercentile];
         return percentileValue;
     }

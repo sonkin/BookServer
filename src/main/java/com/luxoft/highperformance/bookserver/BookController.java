@@ -3,6 +3,9 @@ package com.luxoft.highperformance.bookserver;
 import com.luxoft.highperformance.bookserver.measure.Measure;
 import com.luxoft.highperformance.bookserver.model.Book;
 import com.luxoft.highperformance.bookserver.repositories.BookRepository;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -13,6 +16,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 @RestController
 @RequestMapping("books")
@@ -23,7 +29,15 @@ public class BookController {
     @Autowired
     BookRepository bookRepository;
 
-    @Measure(value = "baseline", warmup = 50)
+    @Autowired
+    BookService bookService;
+
+    @GetMapping("baseline/{s}")
+    public String baseline(@PathVariable String s) {
+        return "baseline "+s;
+    }
+
+    //@Measure(value = "baseline", warmup = 50)
     @GetMapping("keywords0/{keywordsString}")
     public List<Book> getBookByTitle(@PathVariable String keywordsString) {
         String[] keywords = keywordsString.split(" ");
@@ -39,7 +53,7 @@ public class BookController {
         return null;
     }
 
-    @Measure(value = "3 keywords indexed in DB", warmup = 50)
+    //@Measure(value = "3 keywords indexed in DB", warmup = 50)
     @GetMapping("keywords1/{keywordsString}")
     @Transactional(readOnly = true)
     public List<Book> getBookByTitleDB(@PathVariable String keywordsString) {
@@ -96,7 +110,7 @@ public class BookController {
     @Autowired
     DataSource dataSource;
 
-    @Measure(value = "JDBC", warmup = 50)
+    //@Measure(value = "JDBC", warmup = 50)
     @GetMapping("keywords2/{keywordsString}")
     @Transactional
     public List<Book> getBookByTitleJDBC(@PathVariable String keywordsString) throws SQLException {
@@ -148,7 +162,7 @@ public class BookController {
         return books;
     }
 
-    @Measure("test")
+    //@Measure("test")
     @GetMapping("test")
     public String getTest() {
         return "just a test!";
@@ -162,7 +176,7 @@ public class BookController {
         return all.get(index);
     }
 
-    @Measure(value = "baseline", warmup = 50)
+    @Measure(value = "3. HashMap", warmup = 500, baseline = true)
     @GetMapping("keywords3/{keywordsString}")
     public Set<Book> getBookByTitleHashMap(@PathVariable String keywordsString) {
         String[] keywords = keywordsString.split(" ");
@@ -170,7 +184,7 @@ public class BookController {
         Set<Book> bookSet = null;
         for (String keyword : keywords) {
             Set<Book> booksWithKeywordSet = new HashSet<>();
-            Map<String, Set<Book>> map = Book.keywordMap;
+            Map<String, Set<Book>> map = bookService.keywordMap;
             if (map.containsKey(keyword)) {
                 booksWithKeywordSet.addAll(map.get(keyword));
             }
@@ -184,6 +198,148 @@ public class BookController {
         return bookSet;
     }
 
+    public static long getLongHashCode(String string) {
+        long hash = 0;
+        int len = string.length();
+
+        for (int i = 0; i < len; i++) {
+            hash = 31 * hash + string.charAt(i);
+        }
+
+        return hash;
+    }
+
+    Map<String, String> cacheKeywords = new ConcurrentHashMap<>();
+    Long2ObjectOpenHashMap<String> cacheKeywords2 = new Long2ObjectOpenHashMap<>();
+//    Long2ObjectOpenHashMap<String> cacheKeywords2 = new Long2ObjectOpenHashMap<>(1000);
+
+    @Measure(value = "5. Cached with long hash", warmup = 500)
+    @GetMapping("keywords5/{keywordsString}")
+    public String getBookByTitleHashMapCached(@PathVariable String keywordsString) {
+        long hash = getLongHashCode(keywordsString);
+//        String res = cacheKeywords2.get(hash);
+//        if (res != null) return res;
+        if (cacheKeywords2.containsKey(hash))
+            return cacheKeywords2.get(hash);
+
+        String[] keywords = keywordsString.split(" ");
+
+        Set<Book> bookSet = null;
+        for (String keyword : keywords) {
+            Set<Book> booksWithKeywordSet = new HashSet<>();
+            Map<String, Set<Book>> map = bookService.keywordMap;
+            if (map.containsKey(keyword)) {
+                booksWithKeywordSet.addAll(map.get(keyword));
+            }
+            if (bookSet == null) {
+                bookSet = booksWithKeywordSet;
+            } else {
+                bookSet.retainAll(booksWithKeywordSet);
+            }
+        }
+
+        StringBuilder sb = new StringBuilder();
+        for (Book book: bookSet) {
+            if (sb.length()>0) sb.append(", ");
+            sb.append(bookService.bookId2JSON.get(book.getId().intValue()));
+        }
+
+        String jsonBooks = "["+sb.toString()+"]";
+
+        cacheKeywords2.put(hash, jsonBooks);
+
+        return jsonBooks;
+    }
+
+    @Measure(value = "6. Cached with String->String and JSON", warmup = 500)
+    @GetMapping("keywords6/{keywordsString}")
+    public String getBookByTitleHashMapCachedJSON(@PathVariable String keywordsString) {
+        if (cacheKeywords.containsKey(keywordsString))
+            return cacheKeywords.get(keywordsString);
+
+        String[] keywords = keywordsString.split(" ");
+
+        Set<Book> bookSet = null;
+        for (String keyword : keywords) {
+            Set<Book> booksWithKeywordSet = new HashSet<>();
+            Map<String, Set<Book>> map = bookService.keywordMap;
+            if (map.containsKey(keyword)) {
+                booksWithKeywordSet.addAll(map.get(keyword));
+            }
+            if (bookSet == null) {
+                bookSet = booksWithKeywordSet;
+            } else {
+                bookSet.retainAll(booksWithKeywordSet);
+            }
+        }
+
+        StringBuilder sb = new StringBuilder();
+        for (Book book: bookSet) {
+            if (sb.length()>0) sb.append(", ");
+            sb.append(bookService.bookId2JSON.get(book.getId().intValue()));
+        }
+
+        String jsonBooks = "["+sb.toString()+"]";
+
+        cacheKeywords.put(keywordsString, jsonBooks);
+
+        return jsonBooks;
+    }
+
+    @Measure(value = "4. FastUtil", warmup = 500)
+    @GetMapping(value = "keywords4/{keywordsString}",
+            produces = APPLICATION_JSON_VALUE)
+    public String getBookByTitleFastUtil(@PathVariable String keywordsString) {
+        String[] keywords = keywordsString.split(" ");
+
+        IntOpenHashSet bookIdsSet = null;
+        IntOpenHashSet booksWithKeywordSet = new IntOpenHashSet();
+        for (String keyword : keywords) {
+            if (booksWithKeywordSet.size()>0) {
+                booksWithKeywordSet.clear();
+            }
+            Int2ObjectOpenHashMap<IntOpenHashSet> map = bookService.keywordMap2;
+            if (map.containsKey(keyword.hashCode())) {
+                booksWithKeywordSet.addAll(map.get(keyword.hashCode()));
+            }
+            if (bookIdsSet == null) {
+                bookIdsSet = booksWithKeywordSet;
+            } else {
+                bookIdsSet.retainAll(booksWithKeywordSet);
+            }
+        }
+
+        if (bookIdsSet == null) return "[]";
+
+        StringBuilder sb = new StringBuilder();
+        for (int id: bookIdsSet) {
+            if (sb.length()>0) sb.append(", ");
+            sb.append(bookService.bookId2JSON.get(id));
+        }
+
+        return "["+sb.toString()+"]";
+    }
+
+    @Measure(value = "7. Fully pre-indexed", warmup = 500)
+    @GetMapping(value = "keywords7/{keywordsString}",
+            produces = APPLICATION_JSON_VALUE)
+    public String getBookByTitlePreparedIndex(@PathVariable String keywordsString) {
+        List<String> booksJSON = bookService.keywords2JSON.get(keywordsString);
+        if (booksJSON == null) {
+            System.out.println("REQUEST ["+keywordsString+"] is not indexed!");
+            return null;
+        } else if (booksJSON.size() == 1) {
+            return "["+booksJSON.get(0)+"]";
+        } else {
+            StringBuilder sb = new StringBuilder();
+            for (String s : booksJSON) {
+                if (sb.length() > 0) sb.append(", ");
+                sb.append(s);
+            }
+            return "[" + sb.toString() + "]";
+        }
+    }
+
     @GetMapping
     public List<Book> getBooks() {
         return bookRepository.findAll();
@@ -193,14 +349,18 @@ public class BookController {
     public void readAll() {
         List<Book> all = bookRepository.findAll();
         for (Book book: all) {
-            Book.initKeywords(book);
+            bookService.initKeywords(book);
+            bookService.initKeywords2(book);
+            bookService.initKeywords3(book);
         }
     }
 
     @PostMapping
     public Book addBook(@RequestBody Book book) {
-        Book.initKeywords(book);
-        return bookRepository.save(book);
+        Book book1 = bookRepository.save(book);
+        bookService.initKeywords(book);
+        bookService.initKeywords2(book);
+        return book1;
     }
 
 }

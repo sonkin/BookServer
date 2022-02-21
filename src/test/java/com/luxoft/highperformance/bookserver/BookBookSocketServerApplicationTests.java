@@ -3,21 +3,17 @@ package com.luxoft.highperformance.bookserver;
 import com.luxoft.highperformance.bookserver.model.Book;
 import com.luxoft.highperformance.bookserver.repositories.BookRepository;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Commit;
-import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Random;
-import java.util.stream.IntStream;
 
 @SpringBootTest
 @Commit
-class BookServerApplicationTests {
+class BookBookSocketServerApplicationTests {
 
     public final int BOOKS_AMOUNT = 100_000;
 

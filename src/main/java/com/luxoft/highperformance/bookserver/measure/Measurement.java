@@ -19,7 +19,7 @@ public class Measurement {
     private String boost;
 
     @JsonIgnore
-    private Set<Long> times = Collections.synchronizedSet(new HashSet<>());
+    private Set<Long> times = Collections.synchronizedSet(new TreeSet<>());
 
     public Long getPercentile50() {
         return getPercentile(50);

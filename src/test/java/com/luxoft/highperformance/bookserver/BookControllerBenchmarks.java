@@ -12,12 +12,12 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  Benchmark                                       Mode  Cnt  Score   Error  Units
- BookControllerBenchmarks.FastUtil               avgt    3  2.445 ± 0.542  us/op
- BookControllerBenchmarks.PreIndexed             avgt    3  2.213 ± 2.066  us/op
- BookControllerBenchmarks.String2StringMapCache  avgt    3  1.728 ± 1.549  us/op
  BookControllerBenchmarks.baseline               avgt    3  0.180 ± 0.118  us/op
- BookControllerBenchmarks.hashMapIndex           avgt    3  2.498 ± 2.808  us/op
+ BookControllerBenchmarks.String2StringMapCache  avgt    3  1.728 ± 1.549  us/op
  BookControllerBenchmarks.longHashCaching        avgt    3  1.786 ± 1.333  us/op
+ BookControllerBenchmarks.PreIndexed             avgt    3  2.213 ± 2.066  us/op
+ BookControllerBenchmarks.FastUtil               avgt    3  2.445 ± 0.542  us/op
+ BookControllerBenchmarks.hashMapIndex           avgt    3  2.498 ± 2.808  us/op
  */
 @SpringBootTest
 @Fork(1)
@@ -35,7 +35,7 @@ public class BookControllerBenchmarks extends AbstractBenchmark {
 
     @Setup(Level.Trial)
     public void setupBenchmark() {
-        bookController.readAll();
+        bookController.createIndexForAllBooks();
     }
     @Autowired
     public void setBookController(BookController bookController) {
@@ -49,7 +49,7 @@ public class BookControllerBenchmarks extends AbstractBenchmark {
         bh.consume(bookController.baseline(keywords2));
         bh.consume(bookController.baseline(keywords3));
     }
-/*
+
     @Benchmark
     @OperationsPerInvocation(3)
     public void hashMapIndex(Blackhole bh) {
@@ -84,9 +84,9 @@ public class BookControllerBenchmarks extends AbstractBenchmark {
 
     @Benchmark
     @OperationsPerInvocation(3)
-    public String PreIndexed() {
-        return bookController.getBookByTitlePreparedIndex(keywords1)+
-                bookController.getBookByTitlePreparedIndex(keywords2)+
-                bookController.getBookByTitlePreparedIndex(keywords3);
-    }*/
+    public void PreIndexed(Blackhole bh) {
+        bh.consume(bookController.getBookByTitlePreparedIndex(keywords1));
+        bh.consume(bookController.getBookByTitlePreparedIndex(keywords2));
+        bh.consume(bookController.getBookByTitlePreparedIndex(keywords3));
+    }
 }

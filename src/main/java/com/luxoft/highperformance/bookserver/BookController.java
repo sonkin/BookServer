@@ -7,9 +7,15 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -17,6 +23,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -26,7 +33,7 @@ public class BookController {
 
     public final int BOOKS_AMOUNT=10_000;
 
-    @Autowired
+    @Autowired(required = false)
     BookRepository bookRepository;
 
     @Autowired
@@ -211,14 +218,11 @@ public class BookController {
 
     Map<String, String> cacheKeywords = new ConcurrentHashMap<>();
     Long2ObjectOpenHashMap<String> cacheKeywords2 = new Long2ObjectOpenHashMap<>();
-//    Long2ObjectOpenHashMap<String> cacheKeywords2 = new Long2ObjectOpenHashMap<>(1000);
 
     @Measure(value = "5. Cached with long hash", warmup = 500)
     @GetMapping("keywords5/{keywordsString}")
     public String getBookByTitleHashMapCached(@PathVariable String keywordsString) {
         long hash = getLongHashCode(keywordsString);
-//        String res = cacheKeywords2.get(hash);
-//        if (res != null) return res;
         if (cacheKeywords2.containsKey(hash))
             return cacheKeywords2.get(hash);
 
@@ -238,13 +242,14 @@ public class BookController {
             }
         }
 
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder("[");
         for (Book book: bookSet) {
-            if (sb.length()>0) sb.append(", ");
+            if (sb.length()>1) sb.append(", ");
             sb.append(bookService.bookId2JSON.get(book.getId().intValue()));
         }
+        sb.append("]");
 
-        String jsonBooks = "["+sb.toString()+"]";
+        String jsonBooks = sb.toString();
 
         cacheKeywords2.put(hash, jsonBooks);
 
@@ -273,13 +278,14 @@ public class BookController {
             }
         }
 
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder("[");
         for (Book book: bookSet) {
-            if (sb.length()>0) sb.append(", ");
+            if (sb.length()>1) sb.append(", ");
             sb.append(bookService.bookId2JSON.get(book.getId().intValue()));
         }
+        sb.append("]");
 
-        String jsonBooks = "["+sb.toString()+"]";
+        String jsonBooks = sb.toString();
 
         cacheKeywords.put(keywordsString, jsonBooks);
 
@@ -311,13 +317,14 @@ public class BookController {
 
         if (bookIdsSet == null) return "[]";
 
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder("[");
         for (int id: bookIdsSet) {
             if (sb.length()>0) sb.append(", ");
             sb.append(bookService.bookId2JSON.get(id));
         }
+        sb.append("]");
 
-        return "["+sb.toString()+"]";
+        return sb.toString();
     }
 
     @Measure(value = "7. Fully pre-indexed", warmup = 500)
@@ -325,19 +332,14 @@ public class BookController {
             produces = APPLICATION_JSON_VALUE)
     public String getBookByTitlePreparedIndex(@PathVariable String keywordsString) {
         List<String> booksJSON = bookService.keywords2JSON.get(keywordsString);
-        if (booksJSON == null) {
-            System.out.println("REQUEST ["+keywordsString+"] is not indexed!");
-            return null;
-        } else if (booksJSON.size() == 1) {
-            return "["+booksJSON.get(0)+"]";
-        } else {
-            StringBuilder sb = new StringBuilder();
-            for (String s : booksJSON) {
-                if (sb.length() > 0) sb.append(", ");
-                sb.append(s);
-            }
-            return "[" + sb.toString() + "]";
+        if (booksJSON == null) return null;
+        StringBuilder sb = new StringBuilder("[");
+        for (int i=0; i < booksJSON.size(); i++) {
+            if (sb.length() > 1) sb.append(", ");
+            sb.append(booksJSON.get(i));
         }
+        sb.append("]");
+        return sb.toString();
     }
 
     @GetMapping
@@ -345,8 +347,21 @@ public class BookController {
         return bookRepository.findAll();
     }
 
-    @GetMapping("read-all")
-    public void readAll() {
+    @GetMapping("all")
+    public List<Book> getAllBooks() {
+        List<Book> all = bookRepository.findAll();
+        return all;
+    }
+
+    @GetMapping("books/{amount}")
+    public List<Book> getBooks(@PathVariable int amount) {
+        Page<Book> page = bookRepository.findAll(Pageable.ofSize(amount));
+        List<Book> books = page.get().collect(Collectors.toCollection(ArrayList::new));
+        return books;
+    }
+
+    @GetMapping("create-index-all")
+    public void createIndexForAllBooks() {
         List<Book> all = bookRepository.findAll();
         for (Book book: all) {
             bookService.initKeywords(book);

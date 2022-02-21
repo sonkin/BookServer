@@ -19,16 +19,17 @@ abstract public class AbstractBenchmark {
                 .include("\\." + this.getClass().getSimpleName() + "\\.")
                 .warmupIterations(WARMUP_ITERATIONS)
                 .measurementIterations(MEASUREMENT_ITERATIONS)
-                // do not use forking or the benchmark methods will not see references stored within its class
+                // do not use forking or the benchmark methods
+                // will not see references stored within its class
                 .forks(0)
                 // do not use multiple threads
-                .threads(100)
-                .shouldDoGC(true)
+                .threads(4)
 //                .shouldFailOnError(true)
 //                .resultFormat(ResultFormatType.JSON)
 //                .result("/dev/null") // set this to a valid filename if you want reports
                 .shouldFailOnError(true)
-//                .jvmArgs("-server")
+                .shouldDoGC(true)
+//                .jvmArgs("-Xmx128m")
                 .build();
 
         new Runner(opt).run();

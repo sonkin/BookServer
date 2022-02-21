@@ -58,7 +58,7 @@ public class BookClientBenchmarks extends AbstractBenchmark {
 
     @Setup(Level.Trial)
     public void setupBenchmark() {
-        BookClientBenchmarks.bookController.readAll();
+        BookClientBenchmarks.bookController.createIndexForAllBooks();
     }
 
     @Benchmark

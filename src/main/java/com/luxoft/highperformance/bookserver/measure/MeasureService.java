@@ -13,7 +13,7 @@ public class MeasureService {
     Map<String, Measurement> measurements = Collections.synchronizedMap(new TreeMap<>());
     String baselineName;
 
-    public void addMeasurement(String name, Long time, long warmup, boolean baseline) {
+    public synchronized void addMeasurement(String name, Long time, long warmup, boolean baseline) {
         if (baseline) baselineName = name;
         addMeasurement(name, time, warmup);
     }
@@ -25,7 +25,7 @@ public class MeasureService {
         return null;
     }
 
-    public void addMeasurement(String name, Long time, long warmup) {
+    public synchronized void addMeasurement(String name, Long time, long warmup) {
         Measurement measurement = measurements.get(name);
         if (measurement == null) {
             measurement = new Measurement();

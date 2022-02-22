@@ -2,9 +2,12 @@ package com.luxoft.highperformance.bookserver.repositories;
 
 
 import com.luxoft.highperformance.bookserver.model.Book;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public interface BookRepository extends JpaRepository<Book, Integer> {
     List<Book> findAllByTitleContaining(String keyword);
@@ -19,5 +22,7 @@ public interface BookRepository extends JpaRepository<Book, Integer> {
     List<Book> findByKeyword1AndKeyword3(String keyword1, String keyword2);
     List<Book> findByKeyword2AndKeyword3(String keyword1, String keyword2);
     List<Book> findByKeyword1AndKeyword2AndKeyword3(String keyword1, String keyword2, String keyword3);
+
+    CompletableFuture<Page<Book>> findAllBy(Pageable pageable);
 
 }

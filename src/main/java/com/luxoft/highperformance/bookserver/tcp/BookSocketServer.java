@@ -1,7 +1,7 @@
-package com.luxoft.highperformance.bookserver;
+package com.luxoft.highperformance.bookserver.tcp;
 
+import com.luxoft.highperformance.bookserver.BookController;
 import com.luxoft.highperformance.bookserver.model.Book;
-import one.nio.serial.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -10,10 +10,8 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 public class BookSocketServer extends Thread {
@@ -26,21 +24,11 @@ public class BookSocketServer extends Thread {
         start();
     }
 
-
-    class CustomRejectedExecutionHandler implements RejectedExecutionHandler {
-
-        @Override
-        public void rejectedExecution(Runnable runnable, ThreadPoolExecutor threadPoolExecutor) {
-            System.out.println(runnable.toString() + " execution rejected.");
-        }
-    }
-
     ExecutorService executorService =
             //Executors.newFixedThreadPool(4);
             new ThreadPoolExecutor(4, 4,
                     0,TimeUnit.MILLISECONDS,
-                    new ArrayBlockingQueue<Runnable>(100),
-                    new CustomRejectedExecutionHandler());
+                    new ArrayBlockingQueue<Runnable>(100));
 
     public void run() {
         try (ServerSocket serverSocket = new ServerSocket(9100);) {

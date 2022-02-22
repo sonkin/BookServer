@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import javax.activation.MimeType;
 import javax.servlet.http.HttpServletResponse;
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -22,10 +23,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+import static org.springframework.http.MediaType.*;
 
 @RestController
 @RequestMapping("books")
@@ -358,6 +360,14 @@ public class BookController {
         Page<Book> page = bookRepository.findAll(Pageable.ofSize(amount));
         List<Book> books = page.get().collect(Collectors.toCollection(ArrayList::new));
         return books;
+    }
+
+    @GetMapping(value = "books-cf/{amount}", produces = APPLICATION_JSON_VALUE)
+    public CompletableFuture<List<Book>> getBooksCF(@PathVariable int amount) {
+        return bookRepository.findAllBy(Pageable.ofSize(amount))
+        .thenApply(page ->
+            page.get().collect(Collectors.toCollection(ArrayList::new))
+        );
     }
 
     @GetMapping("create-index-all")
